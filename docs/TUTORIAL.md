@@ -57,30 +57,57 @@ Reading list for the whole project, in this order:
 
 ## Milestone 0: repo and workspace
 
-**Goal:** an empty monorepo that installs, type-checks and tests (zero tests is fine).
+**Goal:** the root of the monorepo: the files that sit **above** the four folders and tie them
+together. No app code yet.
 
-1. `cd ~/dev/guestbook && git init -b main`. Create the GitHub repo **beparadox/guestbook**
-   (public or private, your call; public like appbep means a scanner for secrets matters, see
-   step 5), and add it as `origin`. The first commit can go straight to `main`; after that,
-   branches and PRs.
-2. **Root `package.json`**: `"private": true`, `"type": "module"`, `"engines": { "node": ">=22" }`,
-   and `"workspaces": ["shared", "backend", "frontend", "infra"]`. Scripts that fan out to the
-   workspaces, e.g. `"test": "npm run test --workspaces --if-present"`, the same for
-   `typecheck` and `build`, and `"synth": "npm run synth -w infra"`.
-   `appbep: package.json` is a working example.
-3. **A shared TypeScript base**: `tsconfig.base.json` at the root with `"strict": true`,
-   `"target": "ES2022"`, `"module": "ESNext"`, `"moduleResolution": "Bundler"`,
-   `"skipLibCheck": true`. Each workspace's `tsconfig.json` will `extends` it.
-4. **Formatting**: `prettier` as a root dev dependency plus a `.prettierrc.json` (appbep's:
-   `appbep: .prettierrc.json`). Add `format` and `format:check` scripts.
-5. **`check` script**: `format:check && typecheck && test && build && synth`. Optional but
-   recommended: a secret scan with [gitleaks](https://github.com/gitleaks/gitleaks) like
-   `appbep: scripts/scan-secrets.sh`.
+You create three files at the repo root, by hand or with a command:
 
-**Check:** `npm install` creates one `node_modules` and one `package-lock.json` at the root,
-not one per folder. That's workspaces working.
+```
+guestbook/
+├─ package.json        ← you write it (or `npm init -y`, then edit)
+├─ package-lock.json   ← npm creates it; never edit it, always commit it
+├─ tsconfig.base.json  ← you write it
+├─ .prettierrc.json    ← you write it
+├─ node_modules/       ← npm creates it (ignored by git)
+└─ shared/ backend/ frontend/ infra/   (only READMEs for now)
+```
 
-**Commit:** "Set up the workspace".
+1. **The repo** (done: beparadox/guestbook, public). From here on: a branch and a PR per
+   milestone. This one can be `git switch -c workspace`.
+2. **Root `package.json`.** It isn't an app; it's the manager of the four apps. It needs:
+   - `"name": "guestbook"`, `"private": true` (never publish it to npm), `"type": "module"`,
+     `"engines": { "node": ">=22" }`
+   - `"workspaces": []` for now. **Add each folder to this list in the milestone where you
+     give it its own `package.json`** (`frontend` and `infra` in 1, `backend` in 2, `shared`
+     in 3). A workspace is a folder with a `package.json`; listing one that doesn't have one yet
+     makes `npm run … --workspaces` fail with "No workspaces found".
+   - Scripts. For now just `format` (`prettier --write .`), `format:check`
+     (`prettier --check .`) and `check` (`npm run format:check`). Each later milestone adds to
+     `check`: `typecheck`, `test`, `build` (each one `npm run <x> --workspaces --if-present`)
+     and `synth` (`npm run synth -w infra`).
+
+   `appbep: package.json` shows where this ends up.
+3. **Prettier as a root dev dependency:** `npm install --save-dev prettier`. That one command
+   adds `"devDependencies": { "prettier": "^3…" }` to your `package.json`, creates
+   `node_modules/` and `package-lock.json`. "Root" means you run it in the repo root, not inside
+   a folder: tools used across the whole repo (Prettier, later gitleaks) live at the root; tools
+   one app needs (Vite, CDK, the AWS SDK) go in that app's own `package.json`.
+4. **`.prettierrc.json`**: your formatting choices, e.g.
+   `{ "singleQuote": true, "printWidth": 100 }` (appbep's: `appbep: .prettierrc.json`). Add a
+   `.prettierignore` with `package-lock.json`, `dist`, `cdk.out` if Prettier complains about
+   them.
+5. **`tsconfig.base.json`**: the TypeScript settings every folder shares, so they're written once:
+   `"strict": true`, `"target": "ES2022"`, `"module": "ESNext"`, `"moduleResolution": "Bundler"`,
+   `"skipLibCheck": true`, all inside `"compilerOptions"`. Nothing uses it yet; each folder's
+   `tsconfig.json` will start with `"extends": "../tsconfig.base.json"`. (TypeScript itself gets
+   installed per folder later.)
+6. Optional: a secret scan with [gitleaks](https://github.com/gitleaks/gitleaks), like
+   `appbep: scripts/scan-secrets.sh`, added to `check`. Worth it in a public repo.
+
+**Check:** `npm run check` passes, and `git status` shows `package.json`, `package-lock.json`,
+`tsconfig.base.json` and `.prettierrc.json`, but not `node_modules/`.
+
+**Commit:** "Set up the workspace", push the branch, open a PR, merge.
 
 ---
 
@@ -93,12 +120,16 @@ not one per folder. That's workspaces working.
 `npm create vite@latest frontend -- --template react-ts` from the repo root, then delete what
 you don't need (the counter, the logos). Make the `name` in `frontend/package.json`
 `@guestbook/frontend`, and add `"typecheck": "tsc -b --noEmit"` if the template didn't.
-`npm run build -w frontend` must produce `frontend/dist/`.
+`npm run build -w frontend` must produce `frontend/dist/`. Add `"frontend"` to the root
+`workspaces` list, and `typecheck` + `build` to the root `check` script.
 
 ### 1b. The CDK app (`infra/`)
 
+Create `infra/package.json` (`"name": "@guestbook/infra"`, scripts `typecheck`, `test`
+(`vitest run`), `synth` (`cdk synth --quiet`)), add `"infra"` to the root `workspaces`, and
+install from the root with `-w infra`, e.g. `npm install aws-cdk-lib constructs -w infra`.
 Dependencies: `aws-cdk-lib`, `constructs`; dev: `aws-cdk`, `tsx`, `typescript`, `vitest`,
-`@types/node`. Then:
+`@types/node`. Add `test` and `synth` to the root `check`. Then:
 
 - **`cdk.json`**: `{ "app": "npx tsx bin/guestbook.ts" }`
 - **`bin/guestbook.ts`**: `new App()`, then `new GuestbookStack(app, 'Guestbook', { env: { region: 'us-east-1' } })`
@@ -157,7 +188,9 @@ CloudFront can read it.
 
 ### 2a. The handler (`backend/`)
 
-Dependencies: dev `@types/aws-lambda`, `typescript`, `vitest`, `@types/node`.
+Create `backend/package.json` (`@guestbook/backend`, scripts `typecheck` and `test`) and add
+`"backend"` to the root `workspaces`. Dependencies: dev `@types/aws-lambda`, `typescript`,
+`vitest`, `@types/node`.
 
 `backend/src/handler.ts` exports `handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2>`.
 For now: `GET /api/health` → 200 `{ ok: true }`, anything else → 404 `{ error: 'not_found' }`.
@@ -218,7 +251,7 @@ and see the request you just made (the console's "Live Tail" is fun here).
 
 ### 3a. `shared/`
 
-`package.json`: `"name": "@guestbook/shared"`, `"type": "module"`,
+Add `"shared"` to the root `workspaces`. `package.json`: `"name": "@guestbook/shared"`, `"type": "module"`,
 `"exports": { ".": "./src/index.ts" }`. Pointing `exports` at TypeScript source works because
 everything that imports it (Vite, esbuild, Vitest, `tsc` with `moduleResolution: Bundler`)
 understands TypeScript. Mathisthenics does the same with `"main"` and `"types"`
