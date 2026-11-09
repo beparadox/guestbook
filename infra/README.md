@@ -20,15 +20,15 @@ infra/
 
 **What it creates, by the end:**
 
-| Resource              | Milestone | Why                                                         |
-| --------------------- | --------- | ----------------------------------------------------------- |
-| S3 bucket             | 1         | Holds the built React app. Private: only CloudFront reads it |
-| CloudFront distribution | 1       | HTTPS, caching, and one address for both page and API       |
-| Bucket deployment     | 1         | Uploads `frontend/dist` on every deploy                     |
-| Lambda function       | 2         | Runs `backend/src/handler.ts`, bundled by esbuild           |
-| HTTP API (API Gateway)| 2         | Turns HTTPS requests into Lambda calls                      |
-| `/api/*` behavior     | 2         | CloudFront sends API paths to the HTTP API, uncached        |
-| DynamoDB table        | 4         | Stores the entries                                          |
-| GitHub deploy role    | 6         | Lets GitHub Actions deploy without stored keys (OIDC)       |
+| Resource                | Milestone | Why                                                          |
+| ----------------------- | --------- | ------------------------------------------------------------ |
+| S3 bucket               | 1         | Holds the built React app. Private: only CloudFront reads it |
+| CloudFront distribution | 1         | HTTPS, caching, and one address for both page and API        |
+| Bucket deployment       | 1         | Uploads `frontend/dist` on every deploy                      |
+| Lambda function         | 2         | Runs `backend/src/handler.ts`, bundled by esbuild            |
+| HTTP API (API Gateway)  | 2         | Turns HTTPS requests into Lambda calls                       |
+| `/api/*` behavior       | 2         | CloudFront sends API paths to the HTTP API, uncached         |
+| DynamoDB table          | 4         | Stores the entries                                           |
+| GitHub deploy role      | 6         | Lets GitHub Actions deploy without stored keys (OIDC)        |
 
 **Not here:** the code the Lambda runs (that's `backend/`).

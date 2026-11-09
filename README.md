@@ -18,13 +18,13 @@ Visitors sign the guestbook (name + message) and see the latest entries, newest 
 
 ## Layout
 
-| Folder      | What lives here                                            | Runs where                     |
-| ----------- | ---------------------------------------------------------- | ------------------------------ |
-| `shared/`   | The contract: request/response types, `validateEntry()`    | In the browser **and** Lambda  |
-| `backend/`  | The Lambda: handler (HTTP), service (rules), store (data)  | AWS Lambda                     |
-| `frontend/` | Vite + React: the form and the list                        | The visitor's browser          |
-| `infra/`    | AWS CDK: which resources exist and how they're wired       | Your laptop / CI, at deploy    |
-| `docs/`     | [The tutorial](docs/TUTORIAL.md)                           | You                            |
+| Folder      | What lives here                                           | Runs where                    |
+| ----------- | --------------------------------------------------------- | ----------------------------- |
+| `shared/`   | The contract: request/response types, `validateEntry()`   | In the browser **and** Lambda |
+| `backend/`  | The Lambda: handler (HTTP), service (rules), store (data) | AWS Lambda                    |
+| `frontend/` | Vite + React: the form and the list                       | The visitor's browser         |
+| `infra/`    | AWS CDK: which resources exist and how they're wired      | Your laptop / CI, at deploy   |
+| `docs/`     | [The tutorial](docs/TUTORIAL.md)                          | You                           |
 
 Each folder has a README saying what belongs in it and what doesn't.
 
