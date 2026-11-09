@@ -1,19 +1,19 @@
 {
-    "name": "guestbook",
-    "private": "true",
-    "description": "minimalist serverless app",
-    "type": "module",
-    "workspaces": [],
-    "engines": {
-        "node": ">=22"
-    },
-    "scripts": {
-        "format": "prettier --write .",
-        "format:check": "prettier --check .",
-        "check": "npm run format:check",
-        "secrets:scan": "bash scripts/scan-secrets.sh"
-    },
-    "devDependencies": {
-        "prettier": "^3.9.10"
-    }
+  "name": "guestbook",
+  "private": true,
+  "description": "minimalist serverless app",
+  "type": "module",
+  "workspaces": [],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run secrets:scan",
+    "secrets:scan": "bash scripts/scan-secrets.sh"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
 }

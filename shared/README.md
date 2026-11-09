@@ -16,7 +16,7 @@ shared/
    └─ validate.test.ts
 ```
 
-**Why it exists:** the form and the Lambda check input with the *same* function, so they can
+**Why it exists:** the form and the Lambda check input with the _same_ function, so they can
 never disagree about what a valid entry is. The browser check is for the visitor's convenience;
 the Lambda check is the one that counts, because anyone can call the API without the form.
 

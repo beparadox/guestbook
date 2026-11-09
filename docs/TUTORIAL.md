@@ -87,6 +87,7 @@ guestbook/
      and `synth` (`npm run synth -w infra`).
 
    `appbep: package.json` shows where this ends up.
+
 3. **Prettier as a root dev dependency:** `npm install --save-dev prettier`. That one command
    adds `"devDependencies": { "prettier": "^3…" }` to your `package.json`, creates
    `node_modules/` and `package-lock.json`. "Root" means you run it in the repo root, not inside
@@ -135,11 +136,11 @@ Dependencies: `aws-cdk-lib`, `constructs`; dev: `aws-cdk`, `tsx`, `typescript`, 
 - **`bin/guestbook.ts`**: `new App()`, then `new GuestbookStack(app, 'Guestbook', { env: { region: 'us-east-1' } })`
 - **`lib/guestbook-stack.ts`**: a `Stack` subclass with three constructs:
 
-| Construct | Settings that matter | Read |
-| --- | --- | --- |
-| `s3.Bucket` | `blockPublicAccess: BLOCK_ALL`, `enforceSSL: true`; for a learning app, `removalPolicy: DESTROY` + `autoDeleteObjects: true` so `cdk destroy` cleans up fully | [S3 module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_s3-readme.html) |
-| `cloudfront.Distribution` | `defaultRootObject: 'index.html'`; default behavior origin `origins.S3BucketOrigin.withOriginAccessControl(bucket)`, `viewerProtocolPolicy: REDIRECT_TO_HTTPS` | [CloudFront module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront-readme.html), [Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html) |
-| `s3deploy.BucketDeployment` | `sources: [Source.asset('../frontend/dist')]`, `destinationBucket`, `distribution` + `distributionPaths: ['/*']` so each deploy clears the CloudFront cache | [S3 deployment module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_s3_deployment-readme.html) |
+| Construct                   | Settings that matter                                                                                                                                           | Read                                                                                                                                                                                                                                               |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `s3.Bucket`                 | `blockPublicAccess: BLOCK_ALL`, `enforceSSL: true`; for a learning app, `removalPolicy: DESTROY` + `autoDeleteObjects: true` so `cdk destroy` cleans up fully  | [S3 module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_s3-readme.html)                                                                                                                                                            |
+| `cloudfront.Distribution`   | `defaultRootObject: 'index.html'`; default behavior origin `origins.S3BucketOrigin.withOriginAccessControl(bucket)`, `viewerProtocolPolicy: REDIRECT_TO_HTTPS` | [CloudFront module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront-readme.html), [Origin Access Control](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html) |
+| `s3deploy.BucketDeployment` | `sources: [Source.asset('../frontend/dist')]`, `destinationBucket`, `distribution` + `distributionPaths: ['/*']` so each deploy clears the CloudFront cache    | [S3 deployment module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_s3_deployment-readme.html)                                                                                                                                      |
 
 Plus a `CfnOutput` with `https://${distribution.distributionDomainName}`.
 
@@ -210,11 +211,11 @@ and assert:
 
 ### 2b. Infra
 
-| Construct | Settings that matter | Read |
-| --- | --- | --- |
-| `lambdaNodejs.NodejsFunction` | `entry: '../backend/src/handler.ts'`, `runtime: NODEJS_22_X`, `bundling: { format: ESM, minify: true, sourceMap: true }`; a `logs.LogGroup` with a retention period (e.g. 2 weeks) passed as `logGroup` (`appbep: infra/lib/site-stack.ts:80`) | [Lambda Node.js module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs-readme.html) |
-| `apigwv2.HttpApi` | `defaultIntegration: new HttpLambdaIntegration('Api', fn)` sends every route to the one Lambda | [API Gateway v2 module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_apigatewayv2-readme.html) |
-| Distribution `additionalBehaviors['api/*']` | origin `new origins.HttpOrigin(\`${api.apiId}.execute-api.${this.region}.${this.urlSuffix}\`)`, `allowedMethods: ALLOW_ALL`, `cachePolicy: CACHING_DISABLED`, `originRequestPolicy: ALL_VIEWER_EXCEPT_HOST_HEADER` | same CloudFront module |
+| Construct                                   | Settings that matter                                                                                                                                                                                                                           | Read                                                                                                           |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `lambdaNodejs.NodejsFunction`               | `entry: '../backend/src/handler.ts'`, `runtime: NODEJS_22_X`, `bundling: { format: ESM, minify: true, sourceMap: true }`; a `logs.LogGroup` with a retention period (e.g. 2 weeks) passed as `logGroup` (`appbep: infra/lib/site-stack.ts:80`) | [Lambda Node.js module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_nodejs-readme.html) |
+| `apigwv2.HttpApi`                           | `defaultIntegration: new HttpLambdaIntegration('Api', fn)` sends every route to the one Lambda                                                                                                                                                 | [API Gateway v2 module](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_apigatewayv2-readme.html)  |
+| Distribution `additionalBehaviors['api/*']` | origin `new origins.HttpOrigin(\`${api.apiId}.execute-api.${this.region}.${this.urlSuffix}\`)`, `allowedMethods: ALLOW_ALL`, `cachePolicy: CACHING_DISABLED`, `originRequestPolicy: ALL_VIEWER_EXCEPT_HOST_HEADER`                             | same CloudFront module                                                                                         |
 
 `NodejsFunction` runs esbuild on your handler: it follows the imports (including, later,
 `@guestbook/shared`) and bundles them into one file. That's why `shared/` never needs its own
@@ -261,8 +262,14 @@ package published to npm needs, but inside one repo it's just one more build ste
 **`entry.ts`**:
 
 ```ts
-export interface NewEntry { name: string; message: string }          // what the form sends
-export interface Entry extends NewEntry { id: string; createdAt: string } // what the API returns
+export interface NewEntry {
+  name: string;
+  message: string;
+} // what the form sends
+export interface Entry extends NewEntry {
+  id: string;
+  createdAt: string;
+} // what the API returns
 export const LIMITS = { name: 40, message: 500 } as const;
 ```
 
@@ -344,15 +351,15 @@ work you'll do next, so this is a rehearsal).
 
 ### 4b. DynamoDB
 
-**Key design.** DynamoDB only sorts *within* a partition, by the sort key. To list "newest
+**Key design.** DynamoDB only sorts _within_ a partition, by the sort key. To list "newest
 first" with one query, put every entry in the same partition and make the sort key sortable
 by time:
 
-| Attribute | Value | Why |
-| --- | --- | --- |
-| `pk` | `"ENTRY"` | one partition holds all entries |
-| `sk` | `` `${createdAt}#${id}` `` | ISO-8601 timestamps sort correctly as text; the id breaks ties |
-| `name`, `message`, `id`, `createdAt` | the entry | |
+| Attribute                            | Value                      | Why                                                            |
+| ------------------------------------ | -------------------------- | -------------------------------------------------------------- |
+| `pk`                                 | `"ENTRY"`                  | one partition holds all entries                                |
+| `sk`                                 | `` `${createdAt}#${id}` `` | ISO-8601 timestamps sort correctly as text; the id breaks ties |
+| `name`, `message`, `id`, `createdAt` | the entry                  |                                                                |
 
 `latest(limit)` is one `QueryCommand`: `KeyConditionExpression: 'pk = :pk'`,
 `ScanIndexForward: false` (descending), `Limit: limit`. **Not** a `Scan`: a scan reads the
