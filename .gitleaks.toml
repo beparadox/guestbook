@@ -1,0 +1,4 @@
+title = "guestbook gitleaks"
+
+[extend]
+useDefault = true

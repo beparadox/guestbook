@@ -10,7 +10,7 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run format:check",
+    "check": "npm run format:check && npm run secrets:scan",
     "secrets:scan": "bash scripts/scan-secrets.sh"
   },
   "devDependencies": {
