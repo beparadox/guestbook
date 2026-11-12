@@ -3,15 +3,23 @@
   "private": true,
   "description": "minimalist serverless app",
   "type": "module",
-  "workspaces": [],
+  "workspaces": [
+    "frontend",
+    "infra"
+  ],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
+    "build": "npm run build --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run format:check && npm run secrets:scan",
-    "secrets:scan": "bash scripts/scan-secrets.sh"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "check": "npm run format:check && npm run typecheck && npm run lint && npm run build && npm run test && npm run synth && npm run secrets:scan",
+    "secrets:scan": "bash scripts/scan-secrets.sh",
+    "test": "npm run test --workspaces --if-present",
+    "synth": "npm run synth -w infra"
   },
   "devDependencies": {
     "prettier": "^3.9.10"
