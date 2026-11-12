@@ -82,9 +82,11 @@ guestbook/
      in 3). A workspace is a folder with a `package.json`; listing one that doesn't have one yet
      makes `npm run … --workspaces` fail with "No workspaces found".
    - Scripts. For now just `format` (`prettier --write .`), `format:check`
-     (`prettier --check .`) and `check` (`npm run format:check`). Each later milestone adds to
-     `check`: `typecheck`, `test`, `build` (each one `npm run <x> --workspaces --if-present`)
-     and `synth` (`npm run synth -w infra`).
+     (`prettier --check .`) and `check` (`npm run format:check`). Later milestones add root
+     scripts that **forward** to the workspaces, because `npm run typecheck` at the root only
+     looks at the root's own `scripts`: `typecheck`, `build` and `test` (each one
+     `npm run <x> --workspaces --if-present`) and `synth` (`npm run synth -w infra`). Each is
+     then added to `check`.
 
    `appbep: package.json` shows where this ends up.
 
@@ -122,7 +124,23 @@ guestbook/
 you don't need (the counter, the logos). Make the `name` in `frontend/package.json`
 `@guestbook/frontend`, and add `"typecheck": "tsc -b --noEmit"` if the template didn't.
 `npm run build -w frontend` must produce `frontend/dist/`. Add `"frontend"` to the root
-`workspaces` list, and `typecheck` + `build` to the root `check` script.
+`workspaces` list. Then add two forwarding scripts to the **root** `package.json` and call
+them from `check`:
+
+```json
+"typecheck": "npm run typecheck --workspaces --if-present",
+"build": "npm run build --workspaces --if-present",
+"check": "npm run format:check && npm run typecheck && npm run build && npm run secrets:scan"
+```
+
+`--workspaces` runs the script in every listed workspace; `--if-present` skips a workspace that
+doesn't define it. Without these, `npm run check` says the script is missing even though
+`frontend/package.json` has it.
+
+`npm create vite` may install packages inside `frontend/`. Delete `frontend/node_modules` and
+`frontend/package-lock.json` and run `npm install` at the root: one lock file, at the root.
+It also replaces `frontend/README.md` with its template README; get ours back with
+`git restore frontend/README.md`.
 
 ### 1b. The CDK app (`infra/`)
 
@@ -130,7 +148,10 @@ Create `infra/package.json` (`"name": "@guestbook/infra"`, scripts `typecheck`, 
 (`vitest run`), `synth` (`cdk synth --quiet`)), add `"infra"` to the root `workspaces`, and
 install from the root with `-w infra`, e.g. `npm install aws-cdk-lib constructs -w infra`.
 Dependencies: `aws-cdk-lib`, `constructs`; dev: `aws-cdk`, `tsx`, `typescript`, `vitest`,
-`@types/node`. Add `test` and `synth` to the root `check`. Then:
+`@types/node`. Add root scripts `"test": "npm run test --workspaces --if-present"` and
+`"synth": "npm run synth -w infra"`, and extend `check` to
+`… && npm run build && npm run test && npm run synth && …` (build first: infra reads
+`frontend/dist`). Then:
 
 - **`cdk.json`**: `{ "app": "npx tsx bin/guestbook.ts" }`
 - **`bin/guestbook.ts`**: `new App()`, then `new GuestbookStack(app, 'Guestbook', { env: { region: 'us-east-1' } })`
